@@ -1,6 +1,4 @@
-include <BOSL/constants.scad>
-use <BOSL/transforms.scad>
-use <BOSL/shapes.scad>
+use <braille-chars/ueb.scad>
 
 BASE_THICKNESS = 1;
 LINE_HEIGHT = .6;
@@ -14,15 +12,65 @@ DOT_LENGTH = LINE_WIDTH;
 
 CREASE_END_OFFSET = 5; // Crease doesn't go all the way to the edge
 
-module base_plate(width, length) {
-    cuboid(
-        [width, length, BASE_THICKNESS], align=V_BACK + V_RIGHT + V_DOWN
-    );
+//
+// Control functions
+//
+
+module origami_level(n) {
+    // Sets the base height and surface feature level for origami library
+    $origami_level = n;
+    children();
 }
 
+module primitive() {
+    // Raises non-Origami objects that would be flat at z=0 to the base level
+    _surface_level() { children(); }
+}
+
+//
+// Point manipulation
+//
+
+
+//
+// Bases
+//
+
+module square_paper(width, length) {
+    // Edges
+    _surface_level() _to_3d() difference() {
+        square([width, length]);
+        offset(delta=-LINE_WIDTH) square([width, length]);
+    }
+
+    // Base
+    linear_extrude(BASE_THICKNESS * _olevel()) {
+        square([width, length]);
+    }
+}
+
+module polygon_paper(points) {
+    // Edges
+    _surface_level() _to_3d() difference() {
+        polygon(points);
+        offset(delta=-LINE_WIDTH) polygon(points);
+    }
+    // Base
+    linear_extrude(BASE_THICKNESS * _olevel()) {
+        polygon(points);
+    }
+}
+
+//
+// Surface elements
+//
+
+module surface_braille(x, y, chars) {
+    _surface_level() translate([x, y, 0]) braille_label(chars, lie_flat=true, plate_thickness=0);
+}
 
 module solid_line(startx, starty, endx, endy) {
-    _to_3d() {
+    _surface_level() _to_3d() {
         hull() {
             translate([startx, starty]) circle(d=LINE_WIDTH);
             translate([endx, endy]) circle(d=LINE_WIDTH);
@@ -30,19 +78,12 @@ module solid_line(startx, starty, endx, endy) {
     }
 }
 
-module square_outline(x1, y1, x2, y2) {
-    solid_line(x1, y1, x2, y1);
-    solid_line(x2, y1, x2, y2);
-    solid_line(x2, y2, x1, y2);
-    solid_line(x1, y2, x1, y1);
-}
-
 module crease(startx, starty, endx, endy) {
     x1_offset = startx + cos(atan2(endy - starty, endx - startx)) * CREASE_END_OFFSET;
     y1_offset = starty + sin(atan2(endy - starty, endx - startx)) * CREASE_END_OFFSET;
     x2_offset = endx - cos(atan2(endy - starty, endx - startx)) * CREASE_END_OFFSET;
     y2_offset = endy - sin(atan2(endy - starty, endx - startx)) * CREASE_END_OFFSET;
-    _to_3d() {
+    _surface_level() _to_3d() {
         hull() {
             translate([x1_offset, y1_offset]) circle(d=THIN_LINE_WIDTH);
             translate([x2_offset, y2_offset]) circle(d=THIN_LINE_WIDTH);
@@ -52,17 +93,28 @@ module crease(startx, starty, endx, endy) {
 
 module mountain_fold(startx, starty, endx, endy) {
     // This produces a dash-dot-dot line
-    _to_3d() dashed_dotted_line(startx, starty, endx, endy);
+    _surface_level() _to_3d() dashed_dotted_line(startx, starty, endx, endy);
 }
 
 module valley_fold(startx, starty, endx, endy) {
     // This produces a dashed line
-    _to_3d() dashed_line(startx, starty, endx, endy);
+    _surface_level() _to_3d() dashed_line(startx, starty, endx, endy);
 }
+
+//
+// Internal functions
+//
+function _olevel() = is_undef($origami_level) ? 1 : $origami_level;
 
 module _to_3d() {
     linear_extrude(LINE_HEIGHT) { children(); }
 }
+
+
+module _surface_level() {
+    translate([0, 0, _olevel() * BASE_THICKNESS]) { children(); }
+}
+
 
 //
 // ChatGPT written code below
