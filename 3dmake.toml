@@ -1,2 +1,2 @@
 strict_warnings = true
-libraries = ['bosl', 'braille-chars']
+libraries = ['braille-chars']

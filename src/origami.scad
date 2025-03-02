@@ -10,7 +10,7 @@ DASH_SPACING = 3;
 DOT_SPACING = 2.5;
 DOT_LENGTH = LINE_WIDTH;
 
-OUTLINE_PAGES = false; // Whether pages should have a raised outer outline or not
+OUTLINE_PAGES = true; // Whether pages should have a raised outer outline or not
 
 CREASE_END_OFFSET = 5; // Crease doesn't go all the way to the edge
 
