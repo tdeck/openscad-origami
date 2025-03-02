@@ -10,6 +10,8 @@ DASH_SPACING = 3;
 DOT_SPACING = 2.5;
 DOT_LENGTH = LINE_WIDTH;
 
+OUTLINE_PAGES = false; // Whether pages should have a raised outer outline or not
+
 CREASE_END_OFFSET = 5; // Crease doesn't go all the way to the edge
 
 //
@@ -28,19 +30,16 @@ module primitive() {
 }
 
 //
-// Point manipulation
-//
-
-
-//
 // Bases
 //
 
 module square_paper(width, length) {
     // Edges
-    _surface_level() _to_3d() difference() {
-        square([width, length]);
-        offset(delta=-LINE_WIDTH) square([width, length]);
+    if (OUTLINE_PAGES) {
+        _surface_level() _to_3d() difference() {
+            square([width, length]);
+            offset(delta=-LINE_WIDTH) square([width, length]);
+        }
     }
 
     // Base
@@ -51,10 +50,13 @@ module square_paper(width, length) {
 
 module polygon_paper(points) {
     // Edges
-    _surface_level() _to_3d() difference() {
-        polygon(points);
-        offset(delta=-LINE_WIDTH) polygon(points);
+    if (OUTLINE_PAGES) {
+        _surface_level() _to_3d() difference() {
+            polygon(points);
+            offset(delta=-LINE_WIDTH) polygon(points);
+        }
     }
+
     // Base
     linear_extrude(BASE_THICKNESS * _olevel()) {
         polygon(points);
